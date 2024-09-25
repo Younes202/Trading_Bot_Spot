@@ -13,6 +13,15 @@ class SymbolChecking(Exception):
 
     @staticmethod
     def check_symbol(symbol):
-        VALID_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT']  # Add all valid USDT pairs here
+        # Define the valid USDT trading pairs
+        VALID_SYMBOLS = [
+            'BTCUSDT',
+            'ETHUSDT',
+            'BNBUSDT',
+            'DOGSUSDT',  # Include your desired valid symbol
+            'LTCUSDT',
+            'XRPUSDT'
+            ]
+        
         if symbol not in VALID_SYMBOLS:
             raise SymbolChecking(symbol)

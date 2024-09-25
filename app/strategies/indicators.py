@@ -1,6 +1,6 @@
 import pandas_ta as ta
-from strategies.schemas import DataFrameUtils, StrategyNames
-from  strategies.exceptions import StrategyError
+from app.strategies.schemas import DataFrameUtils, StrategyNames
+from  app.strategies.exceptions import StrategyError
 
 class Strategy:
     def __init__(self, data):
@@ -336,7 +336,4 @@ def get_opportunity(data, strategy_name):
     result_data = strategy_map[strategy_name]()
 
     # Return a dictionary with close_price and opportunity_type
-    return {
-        'close_price': result_data['close_price'].iloc[-1],
-        'opportunity_type': result_data['opportunity_type'].iloc[-1],
-    }
+    return result_data

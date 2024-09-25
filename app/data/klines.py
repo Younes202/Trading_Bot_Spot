@@ -1,14 +1,8 @@
+from app.data.exceptions import BinanceAPIError
+from app.data.schemas import KlineColumns
 import pandas as pd
 import requests
 from loguru import logger
-import sys
-import os
-
-# Add the project root directory to sys.path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-# Now the imports will work because 'app' is in the Python path
-from data.exceptions import BinanceAPIError
-from data.schemas import KlineColumns
 
 class BinanceKlines:
     def __init__(self, symbol, interval, start_time, end_time):

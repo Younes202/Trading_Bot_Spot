@@ -1,3 +1,4 @@
+import pandas as pd
 class DataFrameUtils:
     """Utility methods for working with DataFrames."""
 
