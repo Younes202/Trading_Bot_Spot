@@ -20,7 +20,9 @@ class SymbolChecking(Exception):
             'BNBUSDT',
             'DOGSUSDT',  # Include your desired valid symbol
             'LTCUSDT',
-            'XRPUSDT'
+            'XRPUSDT',
+            'SPXUSDT',
+            'PEPEUSDT'
             ]
         
         if symbol not in VALID_SYMBOLS:

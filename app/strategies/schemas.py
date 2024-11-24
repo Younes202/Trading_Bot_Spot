@@ -1,4 +1,5 @@
 import pandas as pd
+from enum import Enum
 class DataFrameUtils:
     """Utility methods for working with DataFrames."""
 
@@ -19,11 +20,25 @@ class DataFrameUtils:
             raise ValueError("Unsupported strategy for filling missing values.")
 
 
-class StrategyNames:
-    """Defines valid strategy names."""
-    VALID_STRATEGIES = [
-        "RSI", "SMA", "EMA", "MACD", "BollingerBands",
-        "Volume", "ATR", "Stochastic", "Fibonacci", "Trendline",
-        "rsi_ma_macd", "rsi_bb_volume", "rsi_trendlines_pricepatterns",
-        "rsi_bb_atr", "rsi_fib_ma", "rsi_stoch_bb", "rsi_volume_macd"
-    ]
+# Define the Enum for Strategy Indicators
+class StrategyIndicator(Enum):
+    RSI = 'RSI'
+    SMA = 'SMA'
+    EMA = 'EMA'
+    MACD = 'MACD'
+    BOLLINGER_BANDS = 'BollingerBands'
+    VOLUME = 'Volume'
+    ATR = 'ATR'
+    STOCHASTIC = 'Stochastic'
+    FIBONACCI = 'Fibonacci'
+    TRENDLINE = 'Trendline'
+    RSI_MA_MACD = 'rsi_ma_macd'
+    RSI_BB_VOLUME = 'rsi_bb_volume'
+    RSI_TRENDLINES_PRICEPATTERNS = 'rsi_trendlines_pricepatterns'
+    RSI_BB_ATR = 'rsi_bb_atr'
+    RSI_FIB_MA = 'rsi_fib_ma'
+    RSI_STOCH_BB = 'rsi_stoch_bb'
+    RSI_VOLUME_MACD = 'rsi_volume_macd'
+
+
+
