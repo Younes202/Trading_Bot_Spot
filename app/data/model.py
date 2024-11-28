@@ -1,8 +1,5 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy import Column, Integer, Float, DateTime
 from app.data.connection import Base
-from sqlalchemy.ext.declarative import declarative_base
-
-Base = declarative_base()
 
 class Kline(Base):
     __tablename__ = "klines"

@@ -1,39 +1,49 @@
 from app.data.klines import BinanceKlines
-from app.strategies.indicators import Strategy
 import datetime
 import asyncio
 from loguru import logger
+import pandas as pd
 
-# Fetch Binance Klines data
-async def main():
-    # Define the parameters
-    symbol = "BTCUSDT"  # Replace with your desired symbol
-    interval = "1h"     # Replace with your desired interval
 
-    # Calculate start_time and end_time dynamically
-    end_time = int(datetime.datetime.now().timestamp() * 1000)
-    start_time = int((datetime.datetime.now() - datetime.timedelta(days=60)).timestamp() * 1000)
+# Fetch and Save to the csv .
+""""
+# Convert start_time and end_time from datetime to milliseconds
+start_time = int(datetime.datetime(2024, 1, 1).timestamp() * 1000)  # January 1, 2024
+end_time = int(datetime.datetime.now().timestamp() * 1000)  # Current time
 
-    print(f"Fetching data from {datetime.datetime.fromtimestamp(start_time / 1000)} to {datetime.datetime.fromtimestamp(end_time / 1000)}")
+# Create an instance of BinanceKlines
+binance_klines = BinanceKlines(symbol="BTCUSDT", interval="1m", start_time=start_time, end_time=end_time)
 
-    # Instantiate the BinanceKlines class
-    binance_klines = BinanceKlines(symbol, interval, start_time, end_time)
+# Define the async function
+async def run():
+    await binance_klines.fetch_and_wrangle_klines(save_to_csv=True)
+"""
 
-    # Fetch and wrangle the kline data
-    try:
-        df = await binance_klines.fetch_and_wrangle_klines()
 
-        # Print the DataFrame
-        print(df.head())
-        str = Strategy(df)
-        condition = str.run_strategy()
-        if condition:
-            logger.info("decision got with buy")
-        else:
-            logger.info("decision got None")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+# remove duplicated rows on the csv .
+"""
+# Step 1: Load the data into a DataFrame
+file_path = "klines_data/BTCUSDT_1m_1709164800000_1711843200000.csv"  # Replace with your CSV file path
+data = pd.read_csv(file_path)
 
-# Run the asyncio event loop
-if __name__ == "__main__":
-    asyncio.run(main())
+# Step 2: Check for duplicate rows
+print(f"Number of duplicate rows: {data.duplicated().sum()}")
+
+# Step 3: Optionally inspect duplicates
+duplicates = data[data.duplicated()]
+print("Duplicate rows:")
+print(duplicates)
+
+# Step 4: Drop duplicates while keeping the first occurrence
+cleaned_data = data.drop_duplicates()
+
+# Step 5: Save the cleaned data back to a new CSV
+cleaned_file_path = "klines_data/03-btc_march.csv"  # Replace with the desired output path
+cleaned_data.to_csv(cleaned_file_path, index=False)
+
+print(f"Cleaned data saved to {cleaned_file_path}")
+"""
+# Running the asynchronous code properly using asyncio.run() within the main guard
+"""if __name__ == "__main__":
+    asyncio.run(run())
+"""

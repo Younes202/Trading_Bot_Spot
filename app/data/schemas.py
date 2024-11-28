@@ -1,4 +1,5 @@
-from enum import Enum
+from pydantic import BaseModel, ConfigDict
+import datetime
 class KlineColumns:
     """Defines the columns for the Binance Klines DataFrame."""
     COLUMNS = [
@@ -7,20 +8,14 @@ class KlineColumns:
         "taker_buy_quote_asset_volume", "ignored"
     ]
 
-# Define an Enum for Valid Binance Trading Pairs with USDT
-class CryptoPair(Enum):
-    BTC_USDT = "BTCUSDT"
-    ETH_USDT = "ETHUSDT"
-    BNB_USDT = "BNBUSDT"
-    ADA_USDT = "ADAUSDT"
-    SOL_USDT = "SOLUSDT"
-    DOT_USDT = "DOTUSDT"
-    XRP_USDT = "XRPUSDT"
-    DOGE_USDT = "DOGEUSDT"
-    AVAX_USDT = "AVAXUSDT"
-    LTC_USDT = "LTCUSDT"
-    MATIC_USDT = "MATICUSDT"
-    LINK_USDT = "LINKUSDT"
-    UNI_USDT = "UNIUSDT"
 
+class KlineSchema(BaseModel):
+    open_time: datetime
+    close_time: datetime
+    open_price: float
+    high_price: float
+    low_price: float
+    close_price: float
+    volume: float
 
+    model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)

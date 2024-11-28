@@ -1,63 +1,76 @@
-# app/data/klines.py
-
+import os
+import pandas as pd
 from app.data.exceptions import BinanceAPIError
 from app.data.schemas import KlineColumns
-import pandas as pd
 import httpx  # Use httpx for asynchronous HTTP requests
 from loguru import logger
-
 class BinanceKlines:
-    def __init__(self, symbol, interval, start_time, end_time):
+    def __init__(self, symbol, interval, start_time, end_time, chunk_size=3600000):  # Default chunk size = 1 hour in ms
         self.symbol = symbol
         self.interval = interval
         self.start_time = start_time
         self.end_time = end_time
+        self.chunk_size = chunk_size
         self.data = None
-        logger.info(f"BinanceKlines initialized with symbol={symbol}, interval={interval}, start_time={start_time}, end_time={end_time}")
+        logger.info(f"BinanceKlines initialized with symbol={symbol}, interval={interval}, start_time={start_time}, end_time={end_time}, chunk_size={chunk_size}")
 
-    async def fetch_and_wrangle_klines(self):
+    async def fetch_and_wrangle_klines(self, save_to_csv=True):
         try:
-            self.data = await self.fetch_data_from_binance()
-            if not self.data:  # Check if data is empty
-                logger.error("No data returned from fetch_data_from_binance.")
-                raise ValueError("No data fetched from Binance API.")
-            
-            return self.convert_data_to_dataframe()
+            # Loop through the time period in chunks
+            current_start_time = self.start_time
+            while current_start_time < self.end_time:
+                current_end_time = min(current_start_time + self.chunk_size, self.end_time)
+                logger.info(f"Fetching data from {current_start_time} to {current_end_time}")
+
+                # Fetch data for the current chunk
+                self.data = await self.fetch_data_from_binance(current_start_time, current_end_time)
+
+                if not self.data:
+                    logger.error("No data returned from fetch_data_from_binance.")
+                    raise ValueError("No data fetched from Binance API.")
+                
+                df = self.convert_data_to_dataframe()
+
+                # Save data to CSV immediately after each chunk is fetched
+                if save_to_csv:
+                    self.save_to_csv(df)
+
+                # Move to the next chunk
+                current_start_time = current_end_time
+
+            return "Data fetched and saved successfully!"
+        
         except Exception as e:
             logger.error(f"Error during fetching and wrangling klines: {e}")
             raise
 
-
-    async def fetch_data_from_binance(self):
+    async def fetch_data_from_binance(self, start_time, end_time):
         base_url = "https://api.binance.com/api/v3/klines"
         all_klines = []
-        current_start_time = self.start_time
 
         async with httpx.AsyncClient() as client:
-            while current_start_time < self.end_time:
-                params = {
-                    "symbol": self.symbol,
-                    "interval": self.interval.lower(),
-                    "startTime": current_start_time,
-                    "endTime": self.end_time
-                }
+            params = {
+                "symbol": self.symbol,
+                "interval": self.interval.lower(),
+                "startTime": start_time,
+                "endTime": end_time
+            }
 
-                try:
-                    response = await client.get(base_url, params=params)
-                    response.raise_for_status()
-                    klines = response.json()
+            try:
+                response = await client.get(base_url, params=params)
+                response.raise_for_status()
+                klines = response.json()
 
-                    if not klines:
-                        break  # Break the loop if no more data is returned
+                if not klines:
+                    logger.info(f"No more data found between {start_time} and {end_time}.")
+                    return []
 
-                    all_klines.extend(klines)
-                    logger.info(f"Fetched {len(klines)} klines from Binance API.")
+                all_klines.extend(klines)
+                logger.info(f"Fetched {len(klines)} klines from Binance API between {start_time} and {end_time}.")
 
-                    current_start_time = klines[-1][0] + 1  # Add 1 ms to avoid overlap
-
-                except httpx.RequestError as e:
-                    logger.error(f"Error fetching data from Binance API: {str(e)}")
-                    raise BinanceAPIError(f"Error fetching data from Binance API: {str(e)}")
+            except httpx.RequestError as e:
+                logger.error(f"Error fetching data from Binance API: {str(e)}")
+                raise BinanceAPIError(f"Error fetching data from Binance API: {str(e)}")
         
         return all_klines
 
@@ -95,3 +108,20 @@ class BinanceKlines:
         
         logger.info("Data conversion to DataFrame completed.")
         return df
+
+    def save_to_csv(self, df):
+        # Ensure output directory exists
+        output_dir = "klines_data"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        # Save all chunks to the same CSV file (appending data)
+        file_path = os.path.join(output_dir, f"{self.symbol}_{self.interval}_{self.start_time}_{self.end_time}.csv")
+
+        # If the file exists, append; otherwise, create a new file
+        if os.path.exists(file_path):
+            df.to_csv(file_path, mode='a', header=False, index=False)
+            logger.info(f"Appended data to {file_path}")
+        else:
+            df.to_csv(file_path, mode='w', header=True, index=False)
+            logger.info(f"Saved data to {file_path}")

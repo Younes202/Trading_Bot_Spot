@@ -169,3 +169,5 @@ cython_debug/
 venv/
 
 app/volatility/trained_models/
+
+klines_data/
