@@ -1,8 +1,7 @@
 from loguru import logger
-import time
 
 class RiskManagement:
-    def __init__(self, priceorder, currentprice, target_profit, stoploss, dollar_investment, atr, fees=0.1, time_limit=7200):
+    def __init__(self, priceorder, currentprice, target_profit, stoploss, dollar_investment, atr, fees=0.1):
         self.priceorder = priceorder        # Entry price (buy price)
         self.currentprice = currentprice    # Current market price
         self.target_profit = target_profit  # Target profit percentage (entered manually)
@@ -11,32 +10,39 @@ class RiskManagement:
         self.atr = atr                      # Average True Range (ATR)
         self.fees = fees / 100              # Trading fee as a decimal (e.g., 0.1% = 0.001)
         self.profit_or_loss = None          # Will be set when exit condition is triggered
-        self.entry_time = time.time()       # Track entry time (in seconds)
-        self.time_limit = time_limit       # Time limit in seconds (default is 2 hours = 7200 seconds)
 
     def calculate_price_from_target(self):
-        """Calculates the target price based on the provided target profit."""
+        """  
+        Calculates the target price based on the provided target profit.
+        Considers trading fees on both entry and exit.
+        """
+        # Target price adjusted for trading fees
         target_price = self.priceorder * (1 + self.target_profit / 100)
-        target_price_after_fees = target_price * (1 + self.fees)
+        target_price_after_fees = target_price * (1 + self.fees)  # Adjust for exit fees
         logger.info(f"Target price after including fees: {target_price_after_fees:.2f}")
         return target_price_after_fees
 
     def calculate_dollar_profit(self, target_price):
         """Calculates the dollar profit based on the target price."""
+        # Number of units purchased
         units = self.dollar_investment / self.priceorder
+        # Profit per unit
         profit_per_unit = target_price - self.priceorder
+        # Total profit in dollars
         dollar_profit = profit_per_unit * units
         return dollar_profit
 
     def target_profit_exit(self):
         """Exit based on the target profit, adjusted by ATR."""
-        target_price = self.calculate_price_from_target()
-        adjusted_target_price = target_price + (self.atr * 0.5)
+        target_price = self.calculate_price_from_target()  # Calculate target price after fees
+        adjusted_target_price = target_price + (self.atr * 0.5)  # Adjust target based on ATR (can change multiplier)
         logger.info(f"Checking target profit exit condition at adjusted price: {adjusted_target_price:.2f}")
+
         if self.currentprice >= adjusted_target_price:
+            # Calculate profit in dollars
             dollar_profit = self.calculate_dollar_profit(adjusted_target_price)
             total_dollars_after_profit = self.dollar_investment + dollar_profit
-            self.profit_or_loss = dollar_profit
+            self.profit_or_loss = dollar_profit  # Store the profit
             logger.info(f"Adjusted target price reached: {self.currentprice:.2f}. Profit: ${dollar_profit:.2f}. Total after profit: ${total_dollars_after_profit:.2f}. Exiting position.")
             return dollar_profit, total_dollars_after_profit
         return None, None
@@ -44,22 +50,14 @@ class RiskManagement:
     def stop_loss_exit(self):
         """Exit based on stop-loss level, adjusted by ATR."""
         stop_loss_price = self.priceorder - (self.priceorder * (self.stoploss / 100))
-        adjusted_stop_loss_price = stop_loss_price - (self.atr * 0.5)
+        adjusted_stop_loss_price = stop_loss_price - (self.atr * 0.5)  # Adjust stop-loss based on ATR
         if self.currentprice <= adjusted_stop_loss_price:
             units = self.dollar_investment / self.priceorder
             loss_per_unit = self.priceorder - self.currentprice
             dollar_loss = loss_per_unit * units
             total_dollars_after_loss = self.dollar_investment - dollar_loss
-            self.profit_or_loss = -dollar_loss
+            self.profit_or_loss = -dollar_loss  # Store the loss
             logger.info(f"Adjusted stop-loss price reached: {self.currentprice:.2f}. Loss: ${dollar_loss:.2f}. Total after loss: ${total_dollars_after_loss:.2f}. Exiting position.")
-            return True
-        return False
-
-    def time_limit_exit(self):
-        """Exit based on time limit (2 hours)."""
-        elapsed_time = time.time() - self.entry_time
-        if elapsed_time > self.time_limit:
-            logger.info(f"Time limit of {self.time_limit / 3600} hours reached. Exiting position due to time constraint.")
             return True
         return False
 
@@ -73,9 +71,6 @@ class RiskManagement:
         if dollar_profit is not None:
             logger.info(f"Exiting position due to reaching target profit of {self.target_profit:.2f}%. Profit: ${dollar_profit:.2f}. Total: ${total_dollars:.2f}")
             return True  # Exit due to reaching target profit
-        
-        if self.time_limit_exit():
-            return True  # Exit due to time limit
 
         return False  # No exit condition met, hold the position
 
