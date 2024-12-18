@@ -26,14 +26,11 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def get_db() -> Session:
     """
-    Dependency to provide a database session.
-    Automatically handles session lifecycle (open/close).
+    Provides a database session.
     """
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    db = SessionLocal()  # Create a new session
+    return db  # Return the session directly
+
 
 # Create all tables (only for development, avoid in production)
 def initialize_database():

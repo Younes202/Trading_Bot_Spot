@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candlestick Chart</title>
+    <script src="https://cdn.plotly.com/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #F7931A; /* Bitcoin Orange */
+        }
+        form {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        form label {
+            margin-right: 5px;
+            font-weight: bold;
+        }
+        form select, 
+        form input {
+            padding: 8px 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            outline: none;
+            width: auto;
+        }
+        form select:focus, 
+        form input:focus {
+            border-color: #F7931A;
+        }
+        form button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #F7931A;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        form button:hover {
+            background-color: #F7931A;
+        }
+        hr {
+            margin: 20px 0;
+            border: none;
+            border-top: 2px solid #eee;
+        }
+        .chart-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>BTC Candlestick Chart</h1>
+
+    <!-- Form to Select Interval and Timeframe -->
+    <form method="get" action="/">
+        <label for="interval">Select Interval:</label>
+        <select name="interval" id="interval">
+            <option value="1m" {% if interval == "1m" %}selected{% endif %}>1 Minute</option>
+            <option value="5m" {% if interval == "5m" %}selected{% endif %}>5 Minutes</option>
+            <option value="15m" {% if interval == "15m" %}selected{% endif %}>15 Minutes</option>
+            <option value="1h" {% if interval == "1h" %}selected{% endif %}>1 Hour</option>
+            <option value="1d" {% if interval == "1d" %}selected{% endif %}>1 Day</option>
+        </select>
+    
+        <label for="month">Select Month:</label>
+        <select name="month" id="month">
+            <option value="2024-01" {% if month == "2024-01" %}selected{% endif %}>January 2024</option>
+            <option value="2024-02" {% if month == "2024-02" %}selected{% endif %}>February 2024</option>
+            <option value="2024-03" {% if month == "2024-03" %}selected{% endif %}>March 2024</option>
+            <option value="2024-04" {% if month == "2024-04" %}selected{% endif %}>April 2024</option>
+            <option value="2024-05" {% if month == "2024-05" %}selected{% endif %}>May 2024</option>
+            <option value="2024-06" {% if month == "2024-06" %}selected{% endif %}>June 2024</option>
+            <option value="2024-07" {% if month == "2024-07" %}selected{% endif %}>July 2024</option>
+            <option value="2024-08" {% if month == "2024-08" %}selected{% endif %}>August 2024</option>
+            <option value="2024-09" {% if month == "2024-09" %}selected{% endif %}>September 2024</option>
+            <option value="2024-10" {% if month == "2024-10" %}selected{% endif %}>October 2024</option>
+        </select>
+    
+        <button type="submit">Generate Chart</button>
+    </form>
+    
+    <hr>
+
+    <!-- Rendered Candlestick Chart -->
+    {% if data %}
+    <!-- Display here -->
+    <div class="chart-container">
+        <div id="chart" style="width: 100%; height: 500px;"></div>
+    </div>
+
+
+{% else %}
+    <!-- Don't Display here -->
+    <div class="chart-container">
+        <p style="text-align: center;">Please select an interval and month to generate the chart.</p>
+    </div>
+{% endif %}
+
+
+</body>
+</html>

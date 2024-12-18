@@ -2,27 +2,39 @@ import pandas_ta as ta
 from loguru import logger
 
 class Strategy:
-    def __init__(self, data, rsi_length=14, bollinger_length=20, bollinger_std_dev=2):
+    def __init__(self, data, rsi_length=14, bollinger_length=20, bollinger_std_dev=2, atr_length=14, adx_length=30, sma_short_length=50, sma_long_length=200):
         self.data = data  # DataFrame containing historical price data
         self.rsi_length = rsi_length  # RSI period
         self.bollinger_length = bollinger_length  # Bollinger Bands period
         self.bollinger_std_dev = bollinger_std_dev  # Bollinger Bands standard deviation
+        self.atr_length = atr_length  # ATR period
+        self.adx_length=adx_length
+        self.sma_short_length=sma_short_length
+        self.sma_long_length=sma_long_length
+        self.window=10
 
+    
     def logic_strategy(self):
         # Key indicators for the strategy
-        self.data['RSI'] = ta.rsi(self.data['close'], length=self.rsi_length)
+        self.data['RSI'] = ta.rsi(self.data['close_price'], length=self.rsi_length)
 
         # Calculate Bollinger Bands
-        bbands = ta.bbands(self.data['close'], length=self.bollinger_length, std=self.bollinger_std_dev)
+        bbands = ta.bbands(self.data['close_price'], length=self.bollinger_length, std=self.bollinger_std_dev)
+        self.data['upper_band'], self.data['middle_band'], self.data['lower_band'] = bbands.iloc[:, 0], bbands.iloc[:, 1], bbands.iloc[:, 2]
 
-        # Dynamically map the correct columns for upper, middle, and lower bands
-        upper_band_col = bbands.columns[0]  # First column: Upper Band
-        middle_band_col = bbands.columns[1]  # Second column: Middle Band
-        lower_band_col = bbands.columns[2]  # Third column: Lower Band
+        # Calculate ATR for dynamic target profit
+        self.data['ATR'] = ta.atr(self.data['high_price'], self.data['low_price'], self.data['close_price'], length=self.atr_length)
 
-        self.data['upper_band'] = bbands[upper_band_col]
-        self.data['middle_band'] = bbands[middle_band_col]
-        self.data['lower_band'] = bbands[lower_band_col]
+        # Calculate ADX
+        adx_result = ta.adx(self.data['high_price'], self.data['low_price'], self.data['close_price'], length=self.adx_length)
+        self.data['ADX'] = adx_result[f'ADX_{self.adx_length}']
+
+        # Moving Averages
+        logger.info(f"Using SMA lengths: short={self.sma_short_length}, long={self.sma_long_length}")
+        self.data['SMA_short'] = ta.sma(self.data['close_price'], length=self.sma_short_length)
+        self.data['SMA_long'] = ta.sma(self.data['close_price'], length=self.sma_long_length)
+
+        # Calculates support and resistance levels using rolling min and max.
         return self.data
 
     def preprocessing(self):
@@ -31,24 +43,13 @@ class Strategy:
         return self.data
 
     def get_decision(self):
-        # Ensure there's enough data to process
-        if len(self.data) == 0:
-            return False  # No data to evaluate
+        # Default no action
 
-        # Access the last row for decision-making
-        last_row = self.data.iloc[-1]  # Extract the last row
-        last_rsi = last_row['RSI']
-        last_close = last_row['close']
-        last_lower_band = last_row['lower_band']
+        # Buy signal: RSI < 40 and close > lower Bollinger Band
+        self.data.loc[
+            (self.data['RSI'] < 30) & (self.data['close_price'] > self.data['lower_band']),
+            'Signal'
+        ] = 1  # Buy signal
 
-        # Decision-making based on strategy
-        if last_rsi < 45 and last_close > last_lower_band:
-            return True
-        return False
 
-    def run_strategy(self):
-        self.logic_strategy()
-        logger.info("indicators calculated successfully")
-        self.preprocessing()
-        logger.info("Preprocessing start")
-        return self.get_decision()
+        return self.data
